@@ -19,6 +19,8 @@ inputs:
 runs:
   using: "docker"
   image: "docker://ghcr.io/wigertztech/action-s3-list-objects-with-tag:latest"
+  entrypoint: "node"
+  args: ["/app/dist/index.js"]
   env:
     AWS_REGION: ${{ inputs.aws_region }}
     AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
