@@ -1,4 +1,5 @@
 import * as AWS from "aws-sdk";
+import * as core from "@actions/core";
 
 const s3 = new AWS.S3();
 
@@ -103,8 +104,14 @@ if (!tagValue) {
 
 search(bucketName, tagKey, tagValue)
   .then((result) => {
-    console.log(result);
+    const objects: string[] = [];
+    for (const object of result) {
+      objects.push(object.objectKey);
+    }
+    core.setOutput("objects", JSON.stringify(objects));
   })
   .catch((error) => {
     console.error("Error occurred:", error);
+    core.setOutput("objects", JSON.stringify([]));
+    core.setFailed(error.message);
   });
