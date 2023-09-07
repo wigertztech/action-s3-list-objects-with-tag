@@ -4,17 +4,27 @@ description: "An action that searches for objects in a s3 bucket with a specific
 
 inputs:
   aws_region:
+    description: "The AWS region where the S3 bucket resides."
     required: true
   aws_access_key_id:
+    description: "The AWS access key ID for authentication."
     required: true
   aws_secret_access_key:
+    description: "The AWS secret access key for authentication."
     required: true
   bucket_name:
+    description: "The name of the S3 bucket to search within."
     required: true
   tag_key:
+    description: "The key of the tag to search for on S3 objects."
     required: true
   tag_value:
+    description: "The value of the tag to match on S3 objects."
     required: true
+
+outputs:
+  objects:
+    description: "JSON list of objects with the specified tag"
 
 runs:
   using: "docker"
