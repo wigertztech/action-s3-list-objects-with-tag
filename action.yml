@@ -1,0 +1,28 @@
+name: "S3 List Object with Tag"
+
+description: "An action that searches for objects in a s3 bucket with a specific tag (key/value)"
+
+inputs:
+  aws_region:
+    required: true
+  aws_access_key_id:
+    required: true
+  aws_secret_access_key:
+    required: true
+  bucket_name:
+    required: true
+  tag_key:
+    required: true
+  tag_value:
+    required: true
+
+runs:
+  using: "docker"
+  image: "docker://ghcr.io/wigertztech/action-s3-list-objects-with-tag:latest"
+  env:
+    AWS_REGION: ${{ inputs.aws_region }}
+    AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+    AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+    BUCKET_NAME: ${{ inputs.bucket_name }}
+    TAG_KEY: ${{ inputs.tag_key }}
+    TAG_VALUE: ${{ inputs.tag_value }}
