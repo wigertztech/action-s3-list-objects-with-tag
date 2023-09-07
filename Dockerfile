@@ -23,7 +23,4 @@ COPY --from=dependencies /app/node_modules ./node_modules
 # Copy compiled app
 COPY --from=build /app/dist ./dist
 
-# Using a non-root user
-USER node
-
 CMD ["node", "dist/index.js"]

@@ -29,7 +29,6 @@ outputs:
 runs:
   using: "docker"
   image: "docker://ghcr.io/wigertztech/action-s3-list-objects-with-tag:latest"
-  options: "--user root"
   entrypoint: "node"
   args: ["/app/dist/index.js"]
   env:
