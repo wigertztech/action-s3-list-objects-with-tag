@@ -3,6 +3,22 @@ import * as core from "@actions/core";
 
 const s3 = new AWS.S3();
 
+interface SeatchParams {
+  bucketName: string;
+  tagKey: string;
+  tagValue: string;
+  tagKeyisRegex: boolean;
+  tagValueisRegex: boolean;
+}
+
+interface MatchParams {
+  tags: { [key: string]: string };
+  tagKey: string;
+  tagValue: string;
+  tagKeyisRegex: boolean;
+  tagValueisRegex: boolean;
+}
+
 interface GetTagsResult {
   objectKey: string;
   tags: { [key: string]: string };
@@ -46,11 +62,32 @@ async function getTagsBatch(
   return Promise.all(jobs);
 }
 
-async function search(
-  bucketName: string,
-  keyName: string,
-  keyValue: string
-): Promise<GetTagsResult[]> {
+function hasMatch({
+  tags,
+  tagKey,
+  tagValue,
+  tagKeyisRegex,
+  tagValueisRegex,
+}: MatchParams): boolean {
+  for (const key of Object.keys(tags)) {
+    if (key !== tagKey) {
+      continue;
+    }
+    if (tags[`${key}`] !== tagValue) {
+      continue;
+    }
+    return true;
+  }
+  return false;
+}
+
+async function search({
+  bucketName,
+  tagKey,
+  tagValue,
+  tagKeyisRegex,
+  tagValueisRegex,
+}: SeatchParams): Promise<GetTagsResult[]> {
   let searchResult: GetTagsResult[] = [];
   let continuationToken;
   do {
@@ -72,13 +109,16 @@ async function search(
     }
 
     for (const result of await getTagsBatch(bucketName, objectKeys)) {
-      if (!result.tags[`${keyName}`]) {
-        continue;
+      const params: MatchParams = {
+        tags: result.tags,
+        tagKey,
+        tagValue,
+        tagKeyisRegex,
+        tagValueisRegex,
+      };
+      if (hasMatch(params)) {
+        searchResult.push(result);
       }
-      if (result.tags[`${keyName}`] !== keyValue) {
-        continue;
-      }
-      searchResult.push(result);
     }
 
     continuationToken = result.NextContinuationToken;
@@ -102,7 +142,19 @@ if (!tagValue) {
   throw new Error("The TAG_VALUE environment variable is not set.");
 }
 
-search(bucketName, tagKey, tagValue)
+const tagKeyisRegex =
+  process.env.TAG_KEY_IS_REGEX?.toLocaleLowerCase() === "true" || false;
+
+const tagValueisRegex =
+  process.env.TAG_VALUE_IS_REGEX?.toLocaleLowerCase() === "true" || false;
+
+search({
+  bucketName,
+  tagKey,
+  tagValue,
+  tagKeyisRegex,
+  tagValueisRegex,
+})
   .then((result) => {
     const objects: string[] = [];
     for (const object of result) {
