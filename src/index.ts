@@ -1,7 +1,7 @@
-import * as AWS from "aws-sdk";
+import { ListObjectsV2CommandInput, S3 } from "@aws-sdk/client-s3";
 import * as core from "@actions/core";
 
-const s3 = new AWS.S3();
+const s3 = new S3();
 
 interface SeatchParams {
   bucketName: string;
@@ -33,10 +33,15 @@ async function getTags(
       Bucket: bucketName,
       Key: objectKey,
     })
-      .promise()
       .then((result) => {
         const tags: { [key: string]: string } = {};
+        if (!result.TagSet) {
+          return reject(new Error("getTags: no tags set"));
+        }
         for (const tag of result.TagSet) {
+          if (!tag.Key || !tag.Value) {
+            continue;
+          }
           tags[tag.Key] = tag.Value;
         }
         resolve({
@@ -91,12 +96,12 @@ async function search({
   let searchResult: GetTagsResult[] = [];
   let continuationToken;
   do {
-    const params: AWS.S3.ListObjectsV2Request = {
+    const params: ListObjectsV2CommandInput = {
       Bucket: bucketName,
       ContinuationToken: continuationToken,
       MaxKeys: 25,
     };
-    const result = await s3.listObjectsV2(params).promise();
+    const result = await s3.listObjectsV2(params);
     if (!result || !result.Contents) {
       throw new Error("result.Contents not set");
     }
