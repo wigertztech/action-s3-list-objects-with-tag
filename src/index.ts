@@ -3,9 +3,37 @@ import * as core from "@actions/core";
 
 const s3 = new S3();
 
+interface Tags {
+  [key: string]: string;
+}
+
 interface GetTagsResult {
   objectKey: string;
-  tags: { [key: string]: string };
+  tags: Tags;
+}
+
+function stringToTags(str: string): Tags {
+  const lines = str.split("\n").filter((line) => line.trim() !== "");
+  const tags: Tags = {};
+  for (const line of lines) {
+    const parts = line.split("=");
+    if (parts.length >= 2) {
+      tags[`${parts[0]}`] = `${parts[1]}`;
+    }
+  }
+  return tags;
+}
+
+function isMatchingTags(objectTags: Tags, targetTags: Tags): boolean {
+  for (const targetTagsKey of Object.keys(targetTags)) {
+    if (!objectTags[targetTagsKey]) {
+      return false;
+    }
+    if (objectTags[targetTagsKey] !== targetTags[targetTagsKey]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 async function getTags(
@@ -53,8 +81,7 @@ async function getTagsBatch(
 
 async function search(
   bucketName: string,
-  keyName: string,
-  keyValue: string
+  tags: Tags
 ): Promise<GetTagsResult[]> {
   let searchResult: GetTagsResult[] = [];
   let continuationToken;
@@ -77,13 +104,9 @@ async function search(
     }
 
     for (const result of await getTagsBatch(bucketName, objectKeys)) {
-      if (!result.tags[`${keyName}`]) {
-        continue;
+      if (isMatchingTags(result.tags, tags)) {
+        searchResult.push(result);
       }
-      if (result.tags[`${keyName}`] !== keyValue) {
-        continue;
-      }
-      searchResult.push(result);
     }
 
     continuationToken = result.NextContinuationToken;
@@ -97,17 +120,12 @@ if (!bucketName) {
   throw new Error("The BUCKET_NAME environment variable is not set.");
 }
 
-const tagKey = process.env.TAG_KEY;
-if (!tagKey) {
-  throw new Error("The TAG_KEY environment variable is not set.");
+const tags = stringToTags(process.env.TAGS || "");
+if (Object.keys(tags).length == 0) {
+  throw new Error("No tags set");
 }
 
-const tagValue = process.env.TAG_VALUE;
-if (!tagValue) {
-  throw new Error("The TAG_VALUE environment variable is not set.");
-}
-
-search(bucketName, tagKey, tagValue)
+search(bucketName, tags)
   .then((result) => {
     const objects: string[] = [];
     for (const object of result) {
