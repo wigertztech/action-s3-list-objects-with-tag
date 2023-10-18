@@ -15,11 +15,8 @@ inputs:
   bucket_name:
     description: "The name of the S3 bucket to search within."
     required: true
-  tag_key:
-    description: "The key of the tag to search for on S3 objects."
-    required: true
-  tag_value:
-    description: "The value of the tag to match on S3 objects."
+  tags:
+    description: "Tags to filter for. Multiline string"
     required: true
   image:
     description: "Image to use for the action"
@@ -39,5 +36,4 @@ runs:
     AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
     AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
     BUCKET_NAME: ${{ inputs.bucket_name }}
-    TAG_KEY: ${{ inputs.tag_key }}
-    TAG_VALUE: ${{ inputs.tag_value }}
+    TAGS: "${{ inputs.tags }}"
