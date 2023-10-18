@@ -25,7 +25,7 @@ outputs:
 
 runs:
   using: "docker"
-  image: "docker://ghcr.io/wigertztech/action-s3-list-objects-with-tag@sha256:b93b72fa802961df1ecc45238538f42e65bb5b60650edc3d1185a1c888ba8f4c"
+  image: "docker://ghcr.io/wigertztech/action-s3-list-objects-with-tag:87675cb31c3f90b2d1fdc1ed6df5536411e28fa6"
   entrypoint: "node"
   args: ["/app/dist/index.js"]
   env:
