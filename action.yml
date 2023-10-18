@@ -18,9 +18,6 @@ inputs:
   tags:
     description: "Tags to filter for. Multiline string"
     required: true
-  image:
-    description: "Image to use for the action"
-    default: "ghcr.io/wigertztech/action-s3-list-objects-with-tag@sha256:b93b72fa802961df1ecc45238538f42e65bb5b60650edc3d1185a1c888ba8f4c"
 
 outputs:
   objects:
@@ -28,7 +25,7 @@ outputs:
 
 runs:
   using: "docker"
-  image: "docker://${{ inputs.image }}"
+  image: "docker://ghcr.io/wigertztech/action-s3-list-objects-with-tag@sha256:b93b72fa802961df1ecc45238538f42e65bb5b60650edc3d1185a1c888ba8f4c"
   entrypoint: "node"
   args: ["/app/dist/index.js"]
   env:
