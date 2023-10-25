@@ -81,10 +81,12 @@ async function getTagsBatch(
 
 async function search(
   bucketName: string,
-  tags: Tags
+  tags: Tags,
+  latest: boolean
 ): Promise<GetTagsResult[]> {
   let searchResult: GetTagsResult[] = [];
   let continuationToken;
+  let latestDate: Date | undefined;
   do {
     const params: ListObjectsV2CommandInput = {
       Bucket: bucketName,
@@ -96,10 +98,26 @@ async function search(
       throw new Error("result.Contents not set");
     }
 
-    const objectKeys: string[] = [];
+    let objectKeys: string[] = [];
     for (const obj of result.Contents) {
-      if (obj.Key) {
+      if (!obj.Key) {
+        continue;
+      }
+      if (!latest) {
         objectKeys.push(obj.Key);
+        continue;
+      }
+      if (!obj.LastModified) {
+        continue;
+      }
+      if (!latestDate) {
+        latestDate = obj.LastModified;
+        objectKeys = [obj.Key];
+        continue;
+      }
+      if (obj.LastModified >= latestDate) {
+        latestDate = obj.LastModified;
+        objectKeys = [obj.Key];
       }
     }
 
@@ -120,12 +138,14 @@ if (!bucketName) {
   throw new Error("The BUCKET_NAME environment variable is not set.");
 }
 
+const latest = process.env.LATEST_ONLY === "true" || false;
+
 const tags = stringToTags(process.env.TAGS || "");
 if (Object.keys(tags).length == 0) {
   throw new Error("No tags set");
 }
 
-search(bucketName, tags)
+search(bucketName, tags, latest)
   .then((result) => {
     const objects: string[] = [];
     for (const object of result) {
